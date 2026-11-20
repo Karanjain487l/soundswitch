@@ -1,0 +1,31 @@
+# Python and local environments
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.env
+.env.*
+!.env.example
+
+# Personal session history and local preferences
+data/*
+!data/.gitkeep
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# Model binaries are distributed through GitHub Releases
+models/*.onnx
+*.onnx.data
+
+# Local tooling and credentials
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+*.log
+*.pem
+*.key

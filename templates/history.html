@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SoundSwitch — History</title>
+<link rel="stylesheet" href="/static/style.css">
+</head><body>
+<nav><div class="nb">
+ <a class="br" href="/"><div class="mk"><span></span></div>SoundSwitch</a>
+ <div class="nl"><a href="/">Live</a><a href="/history" class="on">History</a></div>
+ <div class="nst"><span class="led go"></span><span>stored on server</span></div>
+</div></nav>
+
+<main><div class="w">
+ <section>
+  <div class="eb">Your record</div>
+  <h1>Every session, <em>kept</em>.</h1>
+  <p class="ld">Stored in SQLite on the server. Audio is never uploaded — only which trigger
+   fired, when, how confident the model was, and how much was removed.</p>
+
+  <div class="g3" id="totals"></div>
+
+  <div class="row" style="margin-top:20px">
+   <a href="/api/export.csv"><button class="g sm">Export CSV</button></a>
+   <button class="g sm" id="clear">Clear history</button>
+  </div>
+ </section>
+
+ <section>
+  <h2>Triggers detected, all time</h2>
+  <div class="c" style="margin-top:14px"><div id="byclass"></div></div>
+ </section>
+
+ <section>
+  <h2>Sessions</h2>
+  <div id="sessions"></div>
+ </section>
+
+ <section>
+  <h2>Self-test log</h2>
+  <div class="c" style="margin-top:14px"><div id="tests"></div></div>
+ </section>
+</div></main>
+
+<footer><div class="w">SoundSwitch · history stored server-side in SQLite</div></footer>
+
+<script>
+const NICE={breathing:"Breathing",clock_ticking:"Clock",coughing:"Coughing",eating:"Eating",
+ sniffing:"Sniffing",throat_clearing:"Throat",typing:"Typing"};
+const $=i=>document.getElementById(i);
+const fmt=s=>s<60?s.toFixed(0)+' s':s<3600?(s/60).toFixed(1)+' min':(s/3600).toFixed(1)+' h';
+
+fetch('/api/history').then(r=>r.json()).then(d=>{
+ $('totals').innerHTML=`
+  <div class="c"><div class="stn">${d.totals.sessions}</div><div class="stl">Sessions</div></div>
+  <div class="c"><div class="stn">${fmt(d.totals.seconds||0)}</div><div class="stl">Time listening</div></div>
+  <div class="c"><div class="stn">${d.totals.events}</div><div class="stl">Triggers removed</div></div>`;
+
+ const bc=d.totals.by_class||[];
+ if(!bc.length){$('byclass').innerHTML='<div class="empty">No detections yet.</div>';}
+ else{const mx=Math.max(...bc.map(r=>r.n));
+  $('byclass').innerHTML=bc.map(r=>`
+   <div style="display:flex;align-items:center;gap:13px;margin:9px 0">
+    <span style="width:110px;font-size:13.5px">${NICE[r.class]||r.class}</span>
+    <div style="flex:1;height:22px;border-radius:7px;background:var(--bg2);overflow:hidden">
+     <div style="height:100%;width:${r.n/mx*100}%;border-radius:7px;
+      background:linear-gradient(90deg,var(--sage),var(--clay))"></div></div>
+    <span style="width:52px;text-align:right;font-variant-numeric:tabular-nums;font-size:13.5px">${r.n}</span>
+    <span style="width:66px;text-align:right;font-size:12px;color:var(--ink2)">p ${r.p.toFixed(2)}</span>
+   </div>`).join('');}
+
+ if(!d.sessions.length){$('sessions').innerHTML='<div class="c empty">No sessions yet. Go to Live and press Start listening.</div>';}
+ else $('sessions').innerHTML=d.sessions.map(s=>`
+  <div class="c" style="margin-top:13px">
+   <div class="row" style="justify-content:space-between">
+    <div><b>#${s.id}</b> <span style="color:var(--ink2);font-size:13.5px">${s.started_at.replace('T',' ')}</span>
+     ${s.ended_at?'':'<span class="tag f" style="margin-left:6px">unfinished</span>'}
+     <div style="font-size:12.5px;color:var(--ink3);margin-top:3px">${s.mic_label||'unknown mic'} &rarr; ${s.out_label||'default'}</div></div>
+    <div class="row" style="gap:20px">
+     <div style="text-align:right"><div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2)">Length</div>
+      <div style="font-weight:660">${fmt(s.seconds||0)}</div></div>
+     <div style="text-align:right"><div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2)">Events</div>
+      <div style="font-weight:660">${s.events}</div></div>
+     <div style="text-align:right"><div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2)">Mean removed</div>
+      <div style="font-weight:660">${(s.mean_db||0).toFixed(1)} dB</div></div></div>
+   </div>
+   ${s.breakdown.length?`<table style="margin-top:12px"><tr><th>Trigger</th><th class="num">Count</th>
+     <th class="num">Avg confidence</th><th class="num">Avg removed</th></tr>
+     ${s.breakdown.map(b=>`<tr><td>${NICE[b.class]||b.class}</td><td class="num">${b.n}</td>
+      <td class="num">${b.p.toFixed(2)}</td><td class="num">${b.db.toFixed(1)} dB</td></tr>`).join('')}
+    </table>`:'<div style="font-size:13px;color:var(--ink3);margin-top:10px">No triggers detected in this session.</div>'}
+  </div>`).join('');
+
+ const t=d.selftests||[];
+ if(!t.length){$('tests').innerHTML='<div class="empty">No self-tests recorded yet.</div>';}
+ else $('tests').innerHTML=`<table><tr><th>When</th><th>Result</th><th class="num">Detector</th>
+  <th class="num">Separator</th><th class="num">Burst removed</th><th class="num">Tone kept</th></tr>
+  ${t.map(r=>`<tr><td style="font-size:13px">${r.at.replace('T',' ')}</td>
+   <td><span class="tag ${r.passed?'p':'f'}">${r.passed?'PASS':'FAIL'}</span></td>
+   <td class="num">${r.det_ms.toFixed(0)} ms</td><td class="num">${r.sep_ms.toFixed(0)} ms</td>
+   <td class="num">-${r.burst_db.toFixed(1)} dB</td><td class="num">-${r.tone_db.toFixed(1)} dB</td></tr>`).join('')}
+  </table>`;
+});
+
+$('clear').onclick=async()=>{if(!confirm('Delete all sessions and events?'))return;
+ await fetch('/api/history',{method:'DELETE'});location.reload();};
+</script></body></html>
