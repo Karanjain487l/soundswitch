@@ -1,6 +1,52 @@
 # SoundSwitch
 
-Browser-based prototype for selective suppression of misophonia trigger sounds. A Flask server serves the app and ONNX models; audio processing and model inference run in the browser. SQLite stores session metadata, preferences, events, and self-test results locally on the server machine.
+**Reduce the sounds you don't want to hear, while keeping speech and other sounds audible.**
+
+Imagine someone is talking while a keyboard clicks in the background. You want to hear the person, but the typing bothers you. SoundSwitch lets you select **typing** and reduce that sound while keeping the conversation audible.
+
+The same idea applies to sounds such as chewing, sniffing, coughing, breathing, throat clearing, and a ticking clock. You choose which sounds to filter and how strongly to reduce them.
+
+This project explores a tool for people who find particular everyday sounds distracting or uncomfortable, including people with misophonia.
+
+## A quick demonstration
+
+**Illustrative example: a conversation with keyboard typing**
+
+| Step | What happens |
+| --- | --- |
+| 1. Original sound | Someone speaks while a keyboard clicks nearby. |
+| 2. Your selection | Select **Typing** as the sound to reduce. |
+| 3. SoundSwitch processing | The detector looks for typing, and the separator reduces the selected sound. |
+| 4. Intended result | The keyboard clicks become quieter while the person's speech remains audible. |
+
+```text
+BEFORE:  Person speaking + keyboard clicking + other room sounds
+                              |
+                     Select: reduce typing
+                              |
+AFTER:   Person speaking + quieter keyboard + other room sounds
+```
+
+The goal is selective filtering: choosing one unwanted sound to reduce rather than turning down the whole recording. Results depend on the audio and model performance.
+
+### Try it yourself
+
+1. Follow the setup instructions below and load both models.
+2. Use headphones, choose your microphone, and select **Typing** in the trigger controls.
+3. Click **Start listening**, then speak while typing nearby.
+4. Toggle **Bypass** to compare the original sound with the processed sound.
+5. Adjust the suppression strength and listen for how much typing is reduced and how well speech is preserved.
+
+## How I built the project
+
+The app combines two AI models with a browser audio pipeline:
+
+- **Detector:** identifies the supported trigger sounds in incoming audio.
+- **Separator:** uses those detections to reduce the sounds selected by the user.
+- **Browser audio engine:** captures microphone audio, runs the ONNX models, and plays the processed output using JavaScript and the Web Audio API.
+- **Local backend:** Python and Flask serve the app and models. SQLite saves session history, preferences, and detection metadata.
+
+The model work uses PyTorch, with the exported models run through ONNX Runtime Web. Audio processing and inference happen in the browser.
 
 ## Included
 
