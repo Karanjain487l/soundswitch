@@ -34,10 +34,10 @@ The goal is selective filtering: choosing one unwanted sound to reduce rather th
 1. Follow the setup instructions below and load both models.
 2. Use headphones, choose your microphone, and select **Typing** in the trigger controls.
 3. Click **Start listening**, then speak while typing nearby.
-4. Toggle **Bypass** to compare the original sound with the processed sound.
+4. Toggle **A/B** to compare the processed sound with **A/B: ORIGINAL**.
 5. Adjust the suppression strength and listen for how much typing is reduced and how well speech is preserved.
 
-## How I built the project
+## How it works
 
 The app combines two AI models with a browser audio pipeline:
 
